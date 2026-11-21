@@ -1,0 +1,15 @@
+[package]
+name = "tab5-host"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libc = "0.2"
+image = { version = "0.25.10", default-features = false, features = ["jpeg"] }
+
+[build-dependencies]
+cc = "1.2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
