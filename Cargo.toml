@@ -2,6 +2,9 @@
 name = "tab5-host"
 version = "0.1.0"
 edition = "2024"
+description = "Linux USB gadget that streams the screen to an M5Stack Tab5 and receives its touch and keyboard input"
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 libc = "0.2"
