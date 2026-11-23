@@ -4,7 +4,8 @@
 
 void app_main(void)
 {
-    ESP_ERROR_CHECK(bsp_feature_enable(BSP_FEATURE_USB, false));
+    // USB-A 5 V powers and charges the Cardputer Zero attached as the USB device.
+    ESP_ERROR_CHECK(bsp_feature_enable(BSP_FEATURE_USB, true));
     esp_io_expander_handle_t power = bsp_io_expander1_init();
     ESP_ERROR_CHECK(power ? ESP_OK : ESP_FAIL);
     // PI4IOE5V6408 at 0x44, P7 is IP2326 CHG_EN.
