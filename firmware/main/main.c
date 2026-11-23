@@ -1,11 +1,24 @@
 #include "battery.h"
 #include "bsp/m5stack_tab5.h"
 #include "esp_log.h"
+#include "nvs_flash.h"
 #include "usb_link.h"
 #include "video.h"
 
+static void init_settings(void)
+{
+    esp_err_t result = nvs_flash_init();
+    if (result == ESP_ERR_NVS_NO_FREE_PAGES || result == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // Only display settings live here, so a layout the library cannot read is reset.
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        result = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(result);
+}
+
 void app_main(void)
 {
+    init_settings();
     // USB-A 5 V powers and charges the Cardputer Zero attached as the USB device.
     ESP_ERROR_CHECK(bsp_feature_enable(BSP_FEATURE_USB, true));
     esp_io_expander_handle_t power = bsp_io_expander1_init();

@@ -1,5 +1,6 @@
 #include "video.h"
 #include "usb_link.h"
+#include <stdlib.h>
 #include <string.h>
 #include "bsp/touch.h"
 #include "driver/gpio.h"
@@ -8,6 +9,7 @@
 #include "esp_timer.h"
 #include "freertos/task.h"
 #include "keyboard_state.h"
+#include "menu.h"
 
 static const char *TAG = "input";
 static i2c_master_dev_handle_t keyboard;
@@ -33,12 +35,39 @@ static void publish_keyboard(void)
     usb_link_input(record);
 }
 
+/* A press held this long without moving opens the menu. */
+enum { LONG_PRESS_US = 800000, LONG_PRESS_SLOP = 30 };
+
+typedef struct {
+    bool active, moved, consumed;
+    int64_t started;
+    uint16_t x, y;
+} press_t;
+
+static void track_press(press_t *press, bool touching, uint16_t x, uint16_t y, int64_t now)
+{
+    if (touching && !press->active) {
+        *press = (press_t){.active = true, .started = now, .x = x, .y = y};
+    } else if (touching) {
+        if (abs(x - press->x) > LONG_PRESS_SLOP || abs(y - press->y) > LONG_PRESS_SLOP) press->moved = true;
+        if (!press->moved && !press->consumed && !menu_is_open() && now - press->started >= LONG_PRESS_US) {
+            // The opening press must not also act as a tap inside the menu.
+            press->consumed = true;
+            menu_open();
+        }
+    } else if (press->active) {
+        press->active = false;
+        if (!press->consumed) menu_tap(x, y);
+    }
+}
+
 static void input_task(void *argument)
 {
     bool present = false;
     int64_t next_probe = 0;
     uint16_t last_x = 0, last_y = 0;
     unsigned touch_failures = 0;
+    press_t press = {0};
     for (;;) {
         int64_t now = esp_timer_get_time();
         if (!present && now >= next_probe) {
@@ -83,21 +112,22 @@ static void input_task(void *argument)
         if (result == ESP_OK) {
             result = esp_lcd_touch_get_data(touch, &point, &points, 1);
         }
-        bool pressed = result == ESP_OK && points != 0;
+        bool touching = result == ESP_OK && points != 0;
         uint16_t x = last_x, y = last_y;
         if (result == ESP_OK) {
             touch_failures = 0;
-            if (pressed) {
-                // Inverse of the display's clockwise pixel rotation.
-                x = point.y < VIDEO_WIDTH ? point.y : VIDEO_WIDTH - 1;
-                y = point.x < VIDEO_HEIGHT ? VIDEO_HEIGHT - 1 - point.x : 0;
-            }
+            // Touches outside the picture, possible in portrait, count as no touch.
+            if (touching) touching = video_touch_to_frame(point.x, point.y, &x, &y);
         } else {
             ++touch_failures;
             if (touch_failures == 1 || touch_failures % 100 == 0) {
                 ESP_LOGW(TAG, "Touch read failed: %s; release pointer and retry", esp_err_to_name(result));
             }
         }
+        // A failed read is not a release, so it must not act as a tap in the menu.
+        if (result == ESP_OK) track_press(&press, touching, x, y, now);
+        // The menu owns the touchscreen while open, so the host sees a release.
+        bool pressed = touching && !menu_is_open();
         encode_pointer(record, x, y, pressed);
         usb_link_input(record);
         last_x = x;
