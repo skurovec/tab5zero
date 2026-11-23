@@ -1,4 +1,6 @@
+#include "battery.h"
 #include "bsp/m5stack_tab5.h"
+#include "esp_log.h"
 #include "usb_link.h"
 #include "video.h"
 
@@ -20,4 +22,7 @@ void app_main(void)
     ESP_ERROR_CHECK(video_start());
     ESP_ERROR_CHECK(input_start());
     ESP_ERROR_CHECK(usb_link_start());
+    // The display link stays useful without battery readings, so this failure is not fatal.
+    esp_err_t battery = battery_start();
+    if (battery != ESP_OK) ESP_LOGE("main", "Battery monitor unavailable: %s", esp_err_to_name(battery));
 }
