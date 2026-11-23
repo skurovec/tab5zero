@@ -6,14 +6,14 @@ The Linux side runs as a USB device (gadget). It captures its screen, encodes 12
 
 ![Tab5 showing the screen of a Cardputer Zero connected over USB](docs/tab5-with-cardputer-zero.jpg)
 
-Status: proof of concept. The video, touch, keyboard and charging paths work on real hardware.
+Status: proof of concept. Video and charging work on real hardware. Touch input and the Tab5 keyboard are implemented but not tested in practice.
 
 ## Hardware
 
 - M5Stack Tab5. Tested with ESP32-P4 chip revision v1.0.
 - A Linux computer with a USB device controller, configfs and FunctionFS. Tested with a Cardputer Zero (Raspberry Pi CM0, Debian 13, aarch64).
 - A cable from the Tab5 **USB-A** port to the Linux device's USB device port. On the Cardputer Zero this is the **right** USB-C port.
-- Optional: an I2C keyboard at address `0x6d` on the Tab5 (key map from [M5Unit-KEYBOARD](https://github.com/m5stack/M5Unit-KEYBOARD)).
+- Optional, untested: an I2C keyboard at address `0x6d` on the Tab5 (key map from [M5Unit-KEYBOARD](https://github.com/m5stack/M5Unit-KEYBOARD)).
 
 ## Repository layout
 
@@ -95,6 +95,7 @@ cc -std=c11 -Wall -Wextra -I firmware/main -o keyboard_state_test firmware/tests
 ## Known limitations
 
 - On the Cardputer Zero, the `drm` source fails: FFmpeg `kmsgrab` needs a linear 32-bit BGR0 scanout, but the SPI panel does not provide one. Use the `framebuffer` source; the Tab5 then shows the 320 × 170 screen scaled up.
+- The Cardputer Zero launcher (`M5CardputerZero-APPLaunch`) reads only the built-in keyboard and has no touch support, so Tab5 touches and keys do not reach it.
 - The gadget uses USB ID `1209:0001`, the pid.codes test ID. Products distributed to others need their own vendor and product ID.
 - With USB-A power enabled, the Tab5 battery also supplies the Linux device when no charger is connected.
 
