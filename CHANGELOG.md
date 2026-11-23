@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- On-screen menu on a long press: battery state, rotation by 90°, 180° and 270°, and power off.
+- Battery voltage, level and current logged to the serial console.
+- Fixed charging of a deeply discharged battery by driving the charger's QC select pin.
+
 ## 0.1.0 – 2026-11-23
 
 First public release, a working proof of concept.

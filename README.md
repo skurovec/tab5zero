@@ -38,6 +38,16 @@ idf.py -p /dev/cu.usbmodem1101 flash   # use your serial port
 
 Check the chip revision with `esptool.py --chip esp32p4 -p <port> flash_id`.
 
+### On-screen menu
+
+Hold a finger on the Tab5 screen for about a second to open the menu. It works with or without a connected Linux device and shows:
+
+- battery voltage, an estimated charge level and the charging or discharging current
+- rotation: 0° and 180° are landscape at full resolution; 90° and 270° are portrait, with the 1280 × 720 picture scaled to 720 × 405. Touch input follows the rotation, and the choice is saved.
+- Power off, which needs a second tap to confirm. On USB power the Tab5 may stay on.
+
+Tap Close or anywhere outside the menu to close it. While the menu is open, touches are not sent to the Linux device. The firmware also logs the battery state to the serial console every 10 seconds.
+
 ## Linux host
 
 `tab5-host` builds only for Linux:
